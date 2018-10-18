@@ -1,0 +1,9 @@
+<div fxLayout="column">
+    <div fxFlex="100" fxLayout="column">
+
+        <app-switch-list-tile *ngFor="let item of switch_list"
+                              [receiver]="item"
+                              (change)="elementChange($event)">
+        </app-switch-list-tile>
+    </div>
+</div>

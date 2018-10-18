@@ -1,0 +1,22 @@
+<div fxFlex="100" fxLayout="row" fxLayoutAlign="center center"
+     class="tile mat-elevation-z2">
+
+    <div fxFlex="100" fxLayout="row" fxLayoutAlign=" end">
+
+        <div fxFlex="grow" class="title mat-typography">
+            {{receiver.alias != null ? receiver.alias : receiver.name}}
+        </div>
+
+        <mat-slide-toggle fxFlex="shrink"
+                          [checked]="receiver.state"
+                          (change)="onChange($event)">
+        </mat-slide-toggle>
+
+        <button mat-button>
+            <mat-icon>more_vert</mat-icon>
+        </button>
+
+    </div>
+
+</div>
+

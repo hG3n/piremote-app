@@ -1,1 +1,34 @@
 /* You can add global styles to this file, and also import other style files */
+@import "styles/theme";
+
+html {
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+}
+
+.fill-height {
+    height: 100%;
+}
+
+/**
+ * debug
+ */
+
+.d-border-red {
+    border: 1px solid crimson;
+}
+
+.d-border-green {
+    border: 1px solid green;
+}
+
+.elevation {
+    @include mat-elevation(2);
+}
+
+
