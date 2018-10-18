@@ -1,9 +1,10 @@
 <div fxLayout="column">
     <div fxFlex="100" fxLayout="column">
 
-        <app-switch-list-tile *ngFor="let item of switch_list"
+        <app-switch-list-tile *ngFor="let item of receiver_list"
                               [receiver]="item"
-                              (change)="elementChange($event)">
+                              (change)="elementChange($event)"
+                              (options)="openDialog(item.id)">
         </app-switch-list-tile>
     </div>
 </div>

@@ -1,70 +1,50 @@
 import {Injectable} from '@angular/core';
-import {$WebSocket, WebSocketSendMode} from '../../node_modules/angular2-websocket/angular2-websocket';
-import {Message} from '../Message';
-import {BehaviorSubject, Observable, Subject} from 'rxjs';
 import {environment} from '../environments/environment';
+import {BaseHandlerService} from './base-handler.service';
+import {HttpClient, HttpParams} from '@angular/common/http';
+import {Observable} from 'rxjs';
+import {Message} from '../Message';
+import {DbRequest} from './db_request';
 
 @Injectable({
     providedIn: 'root'
 })
-export class DbService {
+export class DbService extends BaseHandlerService {
 
-    private route = '/db';
-    private open = false;
-    private socket: $WebSocket;
+    private base_url: string;
+    private route: string = '/db';
 
-    public onMessage = new BehaviorSubject(new Message());
+    constructor(http: HttpClient) {
+        super(http);
 
-    constructor() {
+
+        this.base_url = 'http://' + environment.host_ip + ':' + environment.host_port;
     }
 
     /**
-     * Connect to Server
-     * @param {string} ip
-     * @param {string} port
+     *
      */
-    connect(ip: string, port: number): void {
-        this.socket = new $WebSocket('ws://' + environment.host_ip + ':' + environment.host_port + this.route);
-        this.socket.setSend4Mode(WebSocketSendMode.Direct);
+    public getAvailableReceivers(): Observable<any> {
+        let p = new HttpParams();
+        p = p.set('fct', 'get_available_switchables');
 
-        this.socket.onOpen(() => {
-            this.open = true;
-        });
-
-        this.socket.onClose(() => {
-            this.open = false;
-        });
-
-        this.socket.onMessage(
-            (msg: MessageEvent) => {
-                console.log('message received', msg.data);
-                const message: Message = <Message> JSON.parse(msg.data);
-                this.onMessage.next(message);
-            },
-            {autoApply: false}
-        );
-
-        this.socket.onError(
-            (error) => {
-                console.log('Error:', error);
-            }
-        );
+        return super.get(this.base_url + this.route, p);
     }
 
     /**
-     * Check whether the connection is open
-     * @return {boolean}
+     *
+     * @param obj_id
+     * @param alias
      */
-    isOpen(): boolean {
-        return this.open;
-    }
+    public setReceiverAlias(obj_id: number, alias: string): Observable<any> {
 
+        const message: DbRequest = {
+            function: 'set_receiver_alias',
+            element_id: obj_id,
+            field: 'alias',
+            value: alias
+        };
 
-    /**
-     * Send message to server
-     * @param request
-     */
-    send(message: Message): void {
-        this.socket.send(message);
+        return super.post(this.base_url + this.route, JSON.stringify(message));
     }
 }

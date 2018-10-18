@@ -37,7 +37,6 @@ export class InteractionService {
 
         this.socket.onMessage(
             (msg: MessageEvent) => {
-                console.log('message received', msg.data);
                 const message: Message = <Message> JSON.parse(msg.data);
                 this.onMessage.next(message);
             },

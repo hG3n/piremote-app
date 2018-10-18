@@ -12,6 +12,7 @@ export class SwitchListTileComponent implements OnInit {
 
     @Input('receiver') receiver: RFReceiver;
     @Output('change') change = new EventEmitter();
+    @Output('options') options = new EventEmitter();
 
     constructor() {
     }
@@ -38,5 +39,10 @@ export class SwitchListTileComponent implements OnInit {
         }
 
         this.change.emit(message);
+    }
+
+    onOptions(event) {
+        console.log(event);
+        this.options.emit(null);
     }
 }

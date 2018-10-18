@@ -1,35 +1,52 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import {Message} from '../../Message';
 import {DbService} from '../db.service';
 import {RFReceiver} from '../../Receiver';
 import {InteractionService} from '../interaction.service';
+import {MatBottomSheet, MatDialog} from '@angular/material';
+import {ModularDialogComponent} from '../modular-dialog/modular-dialog.component';
+import {DialogDataField, ModularDialogData} from '../ModularDialogData';
 
 @Component({
     selector: 'app-switch-list',
     templateUrl: './switch-list.component.html',
     styleUrls: ['./switch-list.component.scss']
 })
-export class SwitchListComponent implements OnInit {
+export class SwitchListComponent implements OnInit, OnDestroy {
 
-    public switch_list: RFReceiver[] = [];
+    public receiver_list: RFReceiver[] = [];
+    private subscriptions = [];
 
     constructor(private db_service: DbService,
-                private interaction_service: InteractionService) {
+                private interaction_service: InteractionService,
+                private dialog: MatDialog) {
     }
 
     ngOnInit() {
-        this.initDBSocketConncetion();
+        this.getAvailableReceiver();
         this.initInteractionSocketConnection();
     }
 
+    ngOnDestroy() {
+        for (const element in this.subscriptions) {
+            console.log(element);
+        }
+
+    }
+
     public getAvailableReceiver(): void {
-        const message = new Message();
-        message.method = 'get';
-
-        const data = {item: 'receiver'};
-        message.data = data;
-
-        this.db_service.send(message);
+        const sub = this.db_service.getAvailableReceivers()
+            .subscribe(
+                (msg: Message) => {
+                    if (msg.success) {
+                        this.receiver_list = <RFReceiver[]> msg.data;
+                    }
+                },
+                (error) => {
+                    console.log(error);
+                }
+            );
+        this.subscriptions.push(sub);
     }
 
     /**
@@ -38,13 +55,20 @@ export class SwitchListComponent implements OnInit {
      * @param alias
      */
     public changeReceiverAlias(id: number, alias: string): void {
-        const message = new Message();
-        message.method = 'set';
-
-        const data = {receiver: id, field: 'attribute'};
-        message.data = data;
-
-        this.db_service.send(message);
+        const sub = this.db_service.setReceiverAlias(id, alias)
+            .subscribe(
+                (msg: Message) => {
+                    if (msg.success) {
+                        console.log('changed alias');
+                    } else {
+                        console.log('error changing alias');
+                    }
+                },
+                (error) => {
+                    console.log(error);
+                }
+            );
+        this.subscriptions.push(sub);
     }
 
     /**
@@ -55,34 +79,71 @@ export class SwitchListComponent implements OnInit {
         this.interaction_service.send(msg);
     }
 
-    private initDBSocketConncetion(): void {
-
-        if (!this.db_service.isOpen()) {
-            this.db_service.connect('0.0.0.0', 8888);
-        }
-
-        this.getAvailableReceiver();
-
-        this.db_service.onMessage.subscribe((msg: Message) => {
-            if (msg.success) {
-                this.switch_list = <RFReceiver[]> msg.data;
-            }
-        });
-    }
 
     private initInteractionSocketConnection(): void {
         if (!this.interaction_service.isOpen()) {
             this.interaction_service.connect('0.0.0.0', 8888);
         }
 
-        this.interaction_service.onMessage.subscribe((msg: Message) => {
-            if (msg.success) {
-                if (msg.method == 'reload') {
-                    this.getAvailableReceiver();
+        this.interaction_service.onMessage.subscribe(
+            (msg: Message) => {
+                if (msg.success) {
+                    if (msg.method === 'feedback') {
+                        const receiver = <RFReceiver> msg.data;
+
+                        // find receiver
+                        for (let item of this.receiver_list) {
+                            if (item.id === receiver.id) {
+                                if (item.state !== receiver.state) {
+                                    item.state = receiver.state;
+                                }
+                            }
+                        }
+
+                    }
                 }
-            }
-        });
+            },
+            (error) => {
+                console.log(error);
+            });
     }
 
+    private openDialog(receiver_id: number): void {
+
+        let alias_field: DialogDataField = {
+            title: 'Alias',
+            placeholder: 'Alias',
+            value: null
+        };
+
+        let data: ModularDialogData = {
+            title: 'Change Alias',
+            subtitle: null,
+            fields: [alias_field]
+        };
+
+        const dialog_ref = this.dialog.open(ModularDialogComponent,
+            {
+                width: '90%',
+                data: data
+            }
+        );
+
+        dialog_ref.afterClosed().subscribe(
+            (data: ModularDialogData) => {
+                // Todo Make this elegant
+                this.changeReceiverAlias(receiver_id, data.fields[0].value);
+                for (const item of this.receiver_list) {
+                    if (item.id == receiver_id) {
+                        item.alias = data.fields[0].value;
+                    }
+                }
+
+            },
+            (error) => {
+                console.log(error);
+            }
+        );
+    }
 
 }

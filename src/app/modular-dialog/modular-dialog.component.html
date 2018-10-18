@@ -1,0 +1,32 @@
+<div fxLayout="row" fxLayoutAlign="center center">
+    <h2 mat-dialog-title>
+        {{data.title}}
+    </h2>
+</div>
+
+<mat-dialog-content>
+    <div *ngFor="let item of data.fields">
+        <mat-form-field fxFlex="100">
+            <input matInput placeholder="{{item.placeholder}}" [(ngModel)]="item.value">
+        </mat-form-field>
+    </div>
+
+</mat-dialog-content>
+
+<mat-dialog-actions>
+    <div fxFlex="100">
+        <button mat-button mat-dialog-close
+                fxFlex="50"
+                class="m-a-n">
+            <mat-icon>close</mat-icon>
+        </button>
+
+        <button mat-button [mat-dialog-close]="data"
+                fxFlex="50"
+                class="m-a-n">
+            <mat-icon>check</mat-icon>
+        </button>
+    </div>
+</mat-dialog-actions>
+
+
